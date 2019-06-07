@@ -24,8 +24,13 @@ namespace TA
             m_runtime_limit(runtime_limit),
             m_P1(nullptr),
             m_P2(nullptr),
+            m_offensive(nullptr),
+            m_turn("P1"),
+            m_OffenseShip(nullptr),
+            m_DefenseShip(nullptr),
             m_P1Board(size),
-            m_P2Board(size)
+            m_P2Board(size),
+            m_DefenseBoard(nullptr)
         {
             gui = new ASCII;
             m_ship_size = {3,3,5,7};
@@ -38,13 +43,123 @@ namespace TA
         {
             gui->title();
             if( !prepareState() ) return ;
+            m_offensive = m_P1;
+            m_OffenseShip = &m_P1Ship;
+            m_DefenseShip = &m_P2Ship;
+            m_DefenseBoard = &m_P2Board;
 
-            updateGuiGame();
+            while (true) {
+                updateGuiGame();
 
+                /// m_offensive->callbackReportEnemy(m_last_attack);
+                call(&AIInterface::callbackReportEnemy, m_offensive, m_last_attack);
+                m_last_attack.clear();
+
+                for (auto &ship : *m_OffenseShip){
+                    if (ship.state != Ship::State::Sink){
+                        bool hit = false;
+                        /// hitPosition = m_offensive->queryWhereToHit(*m_DefenseBoard);
+                        auto [hitX, hitY] = call(&AIInterface::queryWhereToHit, m_offensive, *m_DefenseBoard);
+
+                        if (within(hitX, hitY, 0, 0, m_size)){
+                            if ((*m_DefenseBoard)[hitX][hitY] == Board::State::Unknown){
+                                putToGui((m_turn + " Hit (%d, %d)\n").c_str(), hitX, hitY);
+                                for (auto &defShip : *m_DefenseShip){
+                                    if (within(hitX, hitY, defShip.x, defShip.y, defShip.size)){
+                                        if (hitX == defShip.x + defShip.size / 2 &&
+                                            hitY == defShip.y + defShip.size / 2){
+                                            defShip.state = Ship::State::Sink;
+                                            putToGui((m_turn + " Sank a Ship.\n").c_str());
+                                        }
+                                        else if (defShip.state != Ship::State::Sink){
+                                            defShip.state = Ship::State::Hit;
+                                            putToGui((m_turn + " Hit a Ship.\n").c_str());
+                                        }
+                                        hit = true;
+                                        (*m_DefenseBoard)[hitX][hitY] = Board::State::Hit;
+                                        break;
+                                    }
+                                }
+                                if (!hit){
+                                    (*m_DefenseBoard)[hitX][hitY] = Board::State::Empty;
+                                }
+                            }
+                            else {
+                                putToGui((m_turn + " Lose: Attack position already hit.\n").c_str());
+                                return;
+                            }
+                        }
+                        else {
+                            putToGui((m_turn + " Lose: Position out of board.\n").c_str());
+                            return;
+                        }
+                        m_last_attack.emplace_back(hitX, hitY);
+
+                        /// m_offensive->callbackReportHit(hit);
+                        call(&AIInterface::callbackReportHit, m_offensive, hit);
+
+                        updateGuiGame();
+                        if (checkGameover()){
+                            return;
+                        }
+                    }
+                }
+
+                /// m_offensive->queryHowToMoveShip(*m_OffenseShip);
+                auto movePath = call(&AIInterface::queryHowToMoveShip, m_offensive, *m_OffenseShip);
+                if (!movePath.empty() && movePath.size() != m_ship_size.size()){
+                    putToGui((m_turn + " Lose: # of moving doesn't match.\n").c_str());
+                    return;
+                }
+                for (int i = 0; i < static_cast<int>(movePath.size()); i++){
+                    auto [dx, dy] = movePath[i];
+                    if (std::abs(dx) + std::abs(dy) > 1){
+                        putToGui((m_turn + " Lose: Invalid move: too much.\n").c_str());
+                        return;
+                    }
+                    auto &ship = (*m_OffenseShip)[i];
+                    if (ship.state == Ship::State::Available){
+                        ship.x += dx;
+                        ship.y += dy;
+                    }
+                    else {
+                        if (dx != 0 || dy != 0){
+                            putToGui((m_turn + " Lose: Invalid move: moving hit ship.\n").c_str());
+                            return;
+                        }
+                    }
+                }
+                if (!checkShipPosition(*m_OffenseShip)){
+                    putToGui((m_turn + " Lose: Invalid move.\n").c_str());
+                    return;
+                }
+
+                if (m_turn == "P1"){
+                    m_turn = "P2";
+                    m_offensive = m_P2;
+                    m_OffenseShip = &m_P2Ship;
+                    m_DefenseShip = &m_P1Ship;
+                    m_DefenseBoard = &m_P1Board;
+                }
+                else {
+                    m_turn = "P1";
+                    m_offensive = m_P1;
+                    m_OffenseShip = &m_P1Ship;
+                    m_DefenseShip = &m_P2Ship;
+                    m_DefenseBoard = &m_P2Board;
+                }
+
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(0.1s);
+            }
             //Todo: Play Game
         } 
 
    private:
+        bool within(int x, int y, int x0, int y0, int size){
+            return x >= x0 && x < x0 + size && y >= y0 && y < y0 + size;
+        }
+
         void updateGuiGame()
         {
             gui->updateGame(m_P1Board, m_P1Ship, m_P2Board, m_P2Ship);
@@ -208,13 +323,20 @@ namespace TA
         std::vector<int> m_ship_size;
         std::chrono::milliseconds m_runtime_limit;
 
+        std::vector<std::pair<int, int>> m_last_attack;
+
         AIInterface *m_P1;
         AIInterface *m_P2;
+        AIInterface *m_offensive;
         GUIInterface *gui;
+        std::string m_turn;
 
         std::vector<Ship> m_P1Ship;
         std::vector<Ship> m_P2Ship;
+        std::vector<Ship> *m_OffenseShip;
+        std::vector<Ship> *m_DefenseShip;
         Board m_P1Board;
         Board m_P2Board;
+        Board *m_DefenseBoard;
     } ;
 }
