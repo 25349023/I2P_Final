@@ -3,7 +3,7 @@
 ## The final project for I2P(II)
 
 - Author
-  - 107062303
+  - 107062303 game v2
   - 107062304 OK
   - 107062306  ok
 
