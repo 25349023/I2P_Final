@@ -20,9 +20,11 @@ class AI : public AIInterface
     std::vector<std::pair<int, int>> enemy;
     std::pair<int, int> mycenter;
     std::pair<int, int> up_bound,down_bound,left_bound,right_bound;
-    std::set<std::pair<int, int>> explored;
+    //std::set<std::pair<int, int>> explored;
     std::vector<Shipcenter> deadship;
     bool ishit;
+    std::pair<int, int> specialcase;
+    bool isspecial;
 public:
     std::vector<TA::Ship>
     init(int size, std::vector<int> ship_size, bool order, std::chrono::milliseconds runtime) override
@@ -31,10 +33,10 @@ public:
         (void) runtime;
         ishit = false;
         std::vector<TA::Ship> tmp;
-        tmp.push_back({3, 3, 6, TA::Ship::State::Available});
-        tmp.push_back({3, 3, 9, TA::Ship::State::Available});
-        tmp.push_back({5, 7, 1, TA::Ship::State::Available});
-        tmp.push_back({7, 7, 6, TA::Ship::State::Available});
+        tmp.push_back({3, 13, 10, TA::Ship::State::Available});
+        tmp.push_back({3, 13, 7, TA::Ship::State::Available});
+        tmp.push_back({5, 8, 13, TA::Ship::State::Available});
+        tmp.push_back({7, 13, 13, TA::Ship::State::Available});
 
         /*for(int i=0;i<size;++i)
             for(int j=0;j<size;++j)
@@ -110,7 +112,7 @@ public:
         {
             if(i <= d.x + d.edge/2 && i >= d.x - d.edge/2 && j <= d.y + d.edge/2 && j >= d.y - d.edge/2)
             {
-                explored.insert(std::make_pair(i, j));
+                ////explored.insert(std::make_pair(i, j));
                 return false;
             }
         }
@@ -127,13 +129,16 @@ public:
                     if (_map[i][j] == TA::Board::State::Hit  && isdead(i, j))
                     {
                         ishit = true;
-                        x = i;
-                        y = j;
-                        explored.insert(std::make_pair(i,j));
+                        //explored.insert(std::make_pair(i,j));
                         mycenter = std::make_pair(i,j);
+                        break;
                     }
+
                 }
+                if (ishit == true)
+                    break;
             }
+            
         }
 
         if (ishit)
@@ -143,7 +148,7 @@ public:
             {
                 if (_map[x][k-1] == TA::Board::State::Unknown && isdead(x, k - 1))
                 {
-                    explored.insert(std::make_pair(x, k - 1));
+                    //explored.insert(std::make_pair(x, k - 1));
 
                     return std::pair<int, int>(x, k - 1);
                 }
@@ -155,7 +160,7 @@ public:
                 }
                 if (_map[x][k-1] == TA::Board::State::Hit && isdead(x, k - 1))
                 {
-                    explored.insert(std::make_pair(x, k - 1));
+                    //explored.insert(std::make_pair(x, k - 1));
                     lenl++;
                 }
                 if(k - 1 == 0 && _map[x][k-1] == TA::Board::State::Hit)
@@ -168,7 +173,7 @@ public:
             {
                 if (_map[x][k + 1] == TA::Board::State::Unknown && isdead(x, k + 1))
                 {
-                    explored.insert(std::make_pair(x, k + 1));
+                    //explored.insert(std::make_pair(x, k + 1));
                     //lenr++;
                     return std::pair<int, int>(x, k + 1);
                 }
@@ -180,11 +185,11 @@ public:
                 }
                 if (_map[x][k + 1] == TA::Board::State::Hit && isdead(x, k + 1))
                 {
-                    explored.insert(std::make_pair(x, k + 1));
+                    //explored.insert(std::make_pair(x, k + 1));
                     lenr++;
                 }
                 if(k + 1 == 19 && _map[x][k + 1] == TA::Board::State::Hit)
-                    left_bound = std::make_pair(x,k + 1);
+                    right_bound = std::make_pair(x,k + 1);
                 k++;
 
             }
@@ -193,7 +198,7 @@ public:
             {
                 if (_map[k - 1][y] == TA::Board::State::Unknown && isdead(k - 1, y))
                 {
-                    explored.insert(std::make_pair(k - 1, y));
+                    //explored.insert(std::make_pair(k - 1, y));
 
                     return std::pair<int, int>(k - 1, y);
                 }
@@ -205,11 +210,11 @@ public:
                 }
                 if (_map[k - 1][y] == TA::Board::State::Hit && isdead(k - 1, y))
                 {
-                    explored.insert(std::make_pair(k - 1, y));
+                    //explored.insert(std::make_pair(k - 1, y));
                     lenu++;
                 }
                 if(k - 1 == 0 && _map[k - 1][y] == TA::Board::State::Hit)
-                    left_bound = std::make_pair(k - 1, y);
+                    up_bound = std::make_pair(k - 1, y);
                 k--;
 
             }
@@ -219,7 +224,7 @@ public:
                 if (_map[k + 1][y] == TA::Board::State::Unknown && isdead(k + 1, y))
                 {
 
-                    explored.insert(std::make_pair(k + 1, y) );
+                    //explored.insert(std::make_pair(k + 1, y) );
                     return std::pair<int, int>(k + 1, y);
                 }
 
@@ -230,11 +235,11 @@ public:
                 }
                 if (_map[k + 1][y] == TA::Board::State::Hit && isdead(k + 1, y))
                 {
-                    explored.insert(std::make_pair(k + 1, y) );
+                    //explored.insert(std::make_pair(k + 1, y) );
                     lend++;
                 }
                 if(k + 1 == 19 && _map[k + 1][y] == TA::Board::State::Hit)
-                    left_bound = std::make_pair(k + 1, y);
+                    down_bound = std::make_pair(k + 1, y);
                 k++;
 
             }
@@ -249,7 +254,7 @@ public:
                 deadship.push_back(temp);
                 if (!isdead(mycenter.first, mycenter.second))
                     ishit = false;
-                explored.insert(std::make_pair(temp.x, temp.y));
+                //explored.insert(std::make_pair(temp.x, temp.y));
                 if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
                 {
 
@@ -258,6 +263,59 @@ public:
             }
             else
             {
+                
+                if (lenl == 0)
+                {
+                    //ishit = false;
+                    //exit(0);
+                    if (lenu + lend == 2 || lenu + lend == 4 || lenu + lend == 6)
+                    {
+                        //ishit = false;
+                        Shipcenter temp;
+                        temp.x = x - (lenu - lend) / 2;
+                        temp.y = y + (lenu + lend) / 2;
+                        temp.edge = lenu + lend;
+
+                        deadship.push_back(temp);
+                        if (!isdead(mycenter.first, mycenter.second))
+                            ishit = false;
+                        //explored.insert(std::make_pair(temp.x, temp.y));
+                        if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
+                        {
+
+                            return std::pair<int, int>(temp.x, temp.y);
+                        }
+                        else
+                            return std::make_pair(-1,-1);
+
+
+                        //return std::make_pair(x - (lenu - lend) / 2, y + (lenu + lend) / 2)
+                    }
+                    if (lenu + lend == 5){
+                        Shipcenter temp;
+                        if (lenu % 3 == 0)
+                            temp.x = x + 1;
+                        else if (lenu % 3 == 1)
+                            temp.x = x;
+                        else
+                            temp.x = x - 1; 
+                        temp.y = y + 1;
+                        temp.edge = 3;
+
+                        deadship.push_back(temp);
+                        if (!isdead(mycenter.first, mycenter.second))
+                            ishit = false;
+                        //explored.insert(std::make_pair(temp.x, temp.y));
+                        if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
+                        {
+
+                            return std::pair<int, int>(temp.x, temp.y);
+                        }
+                        else
+                            return std::make_pair(-1,-1);
+
+                    }
+                }
                 if (lenr == 0)
                 {
                     if(lenu + lend == 2 || lenu + lend == 4 || lenu + lend == 6)
@@ -269,7 +327,7 @@ public:
                         deadship.push_back(temp);
                         if (!isdead(mycenter.first, mycenter.second))
                             ishit = false;
-                        explored.insert(std::make_pair(temp.x, temp.y));
+                        //explored.insert(std::make_pair(temp.x, temp.y));
                         if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
                         {
 
@@ -278,21 +336,20 @@ public:
                         else
                             return std::make_pair(-1,-1);
                     }
-                }
-                if (lenl == 0)
-                {
-                    if(lenu + lend == 2 || lenu + lend == 4 || lenu + lend == 6)
-                    {
-                        //ishit = false;
+                    if (lenu + lend == 5){
                         Shipcenter temp;
-                        temp.x = x - (lenu - lend) / 2;
-                        temp.y = y + (lenu + lend) / 2;
-                        temp.edge = lenu + lend;
-
+                        if (lenu % 3 == 0)
+                            temp.x = x + 1;
+                        else if (lenu % 3 == 1)
+                            temp.x = x;
+                        else
+                            temp.x = x - 1; 
+                        temp.y = y - 1;
+                        temp.edge = 3;
                         deadship.push_back(temp);
                         if (!isdead(mycenter.first, mycenter.second))
                             ishit = false;
-                        explored.insert(std::make_pair(temp.x, temp.y));
+                        //explored.insert(std::make_pair(temp.x, temp.y));
                         if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
                         {
 
@@ -301,8 +358,6 @@ public:
                         else
                             return std::make_pair(-1,-1);
 
-
-                        //return std::make_pair(x - (lenu - lend) / 2, y + (lenu + lend) / 2)
                     }
                 }
                 if (lenu == 0)
@@ -322,7 +377,7 @@ public:
                         deadship.push_back(temp);
                         if (!isdead(mycenter.first, mycenter.second))
                             ishit = false;
-                        explored.insert(std::make_pair(temp.x, temp.y));
+                        //explored.insert(std::make_pair(temp.x, temp.y));
                         if ( _map[temp.x][temp.y] == TA::Board::State::Unknown)
                         {
 
@@ -333,12 +388,36 @@ public:
 
 
                     }
+                    if (lenl + lenr == 5){
+                        Shipcenter temp;
+                        if (lenr % 3 == 0)
+                            temp.y = y - 1;
+                        else if (lenr % 3 == 1)
+                            temp.y = y;
+                        else
+                            temp.y = y + 1; 
+                        temp.x = x + 1;
+                        temp.edge = 3;
+
+                        deadship.push_back(temp);
+                        if (!isdead(mycenter.first, mycenter.second))
+                            ishit = false;
+                        //explored.insert(std::make_pair(temp.x, temp.y));
+                        if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
+                        {
+
+                            return std::pair<int, int>(temp.x, temp.y);
+                        }
+                        else
+                            return std::make_pair(-1,-1);
+
+                    }
                 }
                 if (lend == 0)
                 {
                     if(lenl + lenr == 2 || lenl + lenr == 4 || lenl + lenr == 6)
                     {
-                        //ishit = false;
+                        ishit = false;
                         Shipcenter temp;
                         temp.x = x - (lenl + lenr) / 2;
                         temp.y = y - (lenl - lenr) / 2;
@@ -347,7 +426,7 @@ public:
                         deadship.push_back(temp);
                         if (!isdead(mycenter.first, mycenter.second))
                             ishit = false;
-                        explored.insert(std::make_pair(temp.x, temp.y));
+                        //explored.insert(std::make_pair(temp.x, temp.y));
                         if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
                         {
 
@@ -356,40 +435,77 @@ public:
                         else
                             return std::make_pair(-1,-1);
                     }
+                    if (lenl + lenr == 5){
+                        Shipcenter temp;
+                        if (lenr % 3 == 0)
+                            temp.y = y - 1;
+                        else if (lenr % 3 == 1)
+                            temp.y = y;
+                        else
+                            temp.y = y + 1; 
+                        temp.x = x - 1;
+                        temp.edge = 3;
+
+                        deadship.push_back(temp);
+                        if (!isdead(mycenter.first, mycenter.second))
+                            ishit = false;
+                        //explored.insert(std::make_pair(temp.x, temp.y));
+                        if (_map[temp.x][temp.y] == TA::Board::State::Unknown)
+                        {
+
+                            return std::pair<int, int>(temp.x, temp.y);
+                        }
+                        else
+                            return std::make_pair(-1,-1);
+
+                    }
                 }
                 if (lenl + lenr != 2 && lenl + lenr != 4 && lenl + lenr != 6)
                 {
-                    std::pair<int, int> res = getlen(left_bound.first, left_bound.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
-                    res = getlen(mycenter.first, mycenter.second, _map);
+                    if (!(x == left_bound.first && y == left_bound.second )){
+                        std::pair<int, int> res = getlen(left_bound.first, left_bound.second, _map);
+                        if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
+                            return res;
+                    }
+                    //exit(0);
+                    auto res = getlen(mycenter.first, mycenter.second, _map);
                     if (res.first != -1 && res.second != -1)
                         return res;
                 }
                 if (lenl + lenr != 2 && lenl + lenr != 4 && lenl + lenr != 6)
                 {
-                    std::pair<int, int> res = getlen(right_bound.first, right_bound.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
-                    res = getlen(mycenter.first, mycenter.second, _map);
+                    //exit(0);
+                    if (!(x == right_bound.first && y == right_bound.second )){
+                        std::pair<int, int> res = getlen(right_bound.first, right_bound.second, _map);
+                        if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
+                            return res;
+                    }
+                    auto res = getlen(mycenter.first, mycenter.second, _map);
                     if (res.first != -1 && res.second != -1)
                         return res;
                 }
                 if (lenu + lend != 2 && lenu + lend != 4 && lenu + lend != 6)
                 {
-                    std::pair<int, int> res = getlen(up_bound.first, up_bound.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
-                    res = getlen(mycenter.first, mycenter.second, _map);
+                    //exit(0);0,9
+                    /*if (up_bound.first == 0 && up_bound.second == 9)
+                        exit(0);*/
+                    if (!(x == up_bound.first && y == up_bound.second )){
+                        std::pair<int, int> res = getlen(up_bound.first, up_bound.second, _map);
+                        if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
+                            return res;
+                    }
+                    auto res = getlen(mycenter.first, mycenter.second, _map);
                     if (res.first != -1 && res.second != -1)
                         return res;
                 }
                 if (lenu + lend != 2 && lenu + lend != 4 && lenu + lend != 6)
                 {
-                    std::pair<int, int> res = getlen(down_bound.first, down_bound.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
-                    res = getlen(mycenter.first, mycenter.second, _map);
+                    if (!(x == down_bound.first && y == down_bound.second )){
+                        std::pair<int, int> res = getlen(down_bound.first, down_bound.second, _map);
+                        if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
+                            return res;
+                    }
+                    auto res = getlen(mycenter.first, mycenter.second, _map);
                     if (res.first != -1 && res.second != -1)
                         return res;
                 }
@@ -449,13 +565,17 @@ public:
                     if (_map[i][j] == TA::Board::State::Hit  && isdead(i, j))
                     {
                         ishit = true;
-                        explored.insert(std::make_pair(i,j));
+                        //explored.insert(std::make_pair(i,j));
                         mycenter = std::make_pair(i,j);
+                        break;
                     }
-                }
-            }
-        }
 
+                }
+                if (ishit == true)
+                    break;
+            }
+            
+        }
         if (ishit)
         {
             auto res = getlen(mycenter.first, mycenter.second, _map);
