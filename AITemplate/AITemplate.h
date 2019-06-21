@@ -33,10 +33,10 @@ public:
         (void) runtime;
         ishit = false;
         std::vector<TA::Ship> tmp;
-        tmp.push_back({3, 14, 13, TA::Ship::State::Available});
-        tmp.push_back({3, 9, 12, TA::Ship::State::Available});
-        tmp.push_back({5, 9, 15, TA::Ship::State::Available});
-        tmp.push_back({7, 2, 13, TA::Ship::State::Available});
+        tmp.push_back({3, 4, 6, TA::Ship::State::Available});
+        tmp.push_back({3, 4, 9, TA::Ship::State::Available});
+        tmp.push_back({5, 14, 6, TA::Ship::State::Available});
+        tmp.push_back({7, 7, 6, TA::Ship::State::Available});
 
         /*for(int i=0;i<size;++i)
             for(int j=0;j<size;++j)
@@ -130,10 +130,15 @@ public:
                     {
                         ishit = true;
                         //explored.insert(std::make_pair(i,j));
+                        x = i;
+                        y = j;
                         mycenter = std::make_pair(i,j);
                         break;
                     }
-
+                    /*if (_map[8][6] == TA::Board::State::Hit  && isdead(8, 6))
+                    {
+                        exit(0);
+                    }*/
                 }
                 if (ishit == true)
                     break;
@@ -243,9 +248,12 @@ public:
                 k++;
 
             }
+            /*if (!isdead(8, 7) )
+                exit(0);*/
             if ((lenl + lenr == 2 && lenu + lend == 2) || (lenl + lenr == 4 && lenu + lend == 4) || (lenl + lenr == 6 && lenu + lend == 6))
             {
                 //ishit = false;
+                //exit(0);
                 Shipcenter temp;
                 temp.x = x- (lenu - lend) / 2;
                 temp.y = y - (lenl - lenr) / 2;
@@ -372,6 +380,7 @@ public:
                         temp.x = x + (lenl + lenr) / 2;
                         temp.y = y - (lenl - lenr) / 2;
                         temp.edge = lenl + lenr;
+
                         /*if (lenl + lenr == 6)
                             return std::pair<int, int>(12, 11);*/
                         deadship.push_back(temp);
@@ -560,6 +569,7 @@ public:
            }
         }
         */
+        
         if (!ishit)
         {
             for (int i = 0; i < 20; i++)
@@ -573,7 +583,7 @@ public:
                         mycenter = std::make_pair(i,j);
                         break;
                     }
-
+                    
                 }
                 if (ishit == true)
                     break;
