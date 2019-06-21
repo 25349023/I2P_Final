@@ -33,10 +33,10 @@ public:
         (void) runtime;
         ishit = false;
         std::vector<TA::Ship> tmp;
-        tmp.push_back({3, 13, 10, TA::Ship::State::Available});
-        tmp.push_back({3, 13, 7, TA::Ship::State::Available});
-        tmp.push_back({5, 8, 13, TA::Ship::State::Available});
-        tmp.push_back({7, 13, 13, TA::Ship::State::Available});
+        tmp.push_back({3, 14, 13, TA::Ship::State::Available});
+        tmp.push_back({3, 9, 12, TA::Ship::State::Available});
+        tmp.push_back({5, 9, 15, TA::Ship::State::Available});
+        tmp.push_back({7, 2, 13, TA::Ship::State::Available});
 
         /*for(int i=0;i<size;++i)
             for(int j=0;j<size;++j)
@@ -466,11 +466,12 @@ public:
                         std::pair<int, int> res = getlen(left_bound.first, left_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
+                        res = getlen(mycenter.first, mycenter.second, _map);
+                        if (res.first != -1 && res.second != -1)
+                            return res;    
                     }
                     //exit(0);
-                    auto res = getlen(mycenter.first, mycenter.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
+                    
                 }
                 if (lenl + lenr != 2 && lenl + lenr != 4 && lenl + lenr != 6)
                 {
@@ -479,10 +480,11 @@ public:
                         std::pair<int, int> res = getlen(right_bound.first, right_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
+                        res = getlen(mycenter.first, mycenter.second, _map);
+                        if (res.first != -1 && res.second != -1)
+                            return res;     
                     }
-                    auto res = getlen(mycenter.first, mycenter.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
+                   
                 }
                 if (lenu + lend != 2 && lenu + lend != 4 && lenu + lend != 6)
                 {
@@ -493,10 +495,11 @@ public:
                         std::pair<int, int> res = getlen(up_bound.first, up_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
+                        res = getlen(mycenter.first, mycenter.second, _map);
+                        if (res.first != -1 && res.second != -1)
+                            return res;    
                     }
-                    auto res = getlen(mycenter.first, mycenter.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
+                    
                 }
                 if (lenu + lend != 2 && lenu + lend != 4 && lenu + lend != 6)
                 {
@@ -504,10 +507,11 @@ public:
                         std::pair<int, int> res = getlen(down_bound.first, down_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
+                        res = getlen(mycenter.first, mycenter.second, _map);
+                        if (res.first != -1 && res.second != -1)
+                            return res;    
                     }
-                    auto res = getlen(mycenter.first, mycenter.second, _map);
-                    if (res.first != -1 && res.second != -1)
-                        return res;
+                    
                 }
             }
         }
