@@ -7,7 +7,7 @@
 #include <ctime>
 #include <set>
 #include <vector>
-
+enum last_search_way  {none, left, right, up, down};
 struct Shipcenter
 {
     int x;
@@ -23,8 +23,7 @@ class AI : public AIInterface
     //std::set<std::pair<int, int>> explored;
     std::vector<Shipcenter> deadship;
     bool ishit;
-    std::pair<int, int> specialcase;
-    bool isspecial;
+    last_search_way last;
 public:
     std::vector<TA::Ship>
     init(int size, std::vector<int> ship_size, bool order, std::chrono::milliseconds runtime) override
@@ -33,11 +32,14 @@ public:
         (void) runtime;
         ishit = false;
         std::vector<TA::Ship> tmp;
-        tmp.push_back({3, 4, 6, TA::Ship::State::Available});
-        tmp.push_back({3, 4, 9, TA::Ship::State::Available});
-        tmp.push_back({5, 14, 6, TA::Ship::State::Available});
-        tmp.push_back({7, 7, 6, TA::Ship::State::Available});
-
+        tmp.push_back({3, 0, 13, TA::Ship::State::Available});
+        tmp.push_back({3, 0, 16, TA::Ship::State::Available});
+        tmp.push_back({5, 3, 8, TA::Ship::State::Available});
+        tmp.push_back({7, 3, 13, TA::Ship::State::Available});
+        bool fff = order;
+        int ddd = ship_size.size();
+        int kkk = size;
+        kkk = kkk + ddd + fff;
         /*for(int i=0;i<size;++i)
             for(int j=0;j<size;++j)
                 way.emplace_back(i,j);
@@ -149,6 +151,8 @@ public:
         if (ishit)
         {
             int k = y, lenl = 0, lenr = 0, lenu = 0, lend = 0;
+            if (k == 0)
+                left_bound = std::make_pair(x,y);
             while (k > 0)
             {
                 if (_map[x][k-1] == TA::Board::State::Unknown && isdead(x, k - 1))
@@ -171,9 +175,10 @@ public:
                 if(k - 1 == 0 && _map[x][k-1] == TA::Board::State::Hit)
                     left_bound = std::make_pair(x,k - 1); 
                 k--;
-
             }
             k = y;
+            if (k == 19)
+                left_bound = std::make_pair(x,y);
             while (k < 19)
             {
                 if (_map[x][k + 1] == TA::Board::State::Unknown && isdead(x, k + 1))
@@ -199,6 +204,8 @@ public:
 
             }
             k = x;
+            if (k == 0)
+                left_bound = std::make_pair(x,y);
             while (k > 0)
             {
                 if (_map[k - 1][y] == TA::Board::State::Unknown && isdead(k - 1, y))
@@ -224,6 +231,8 @@ public:
 
             }
             k = x;
+            if (k == 19)
+                left_bound = std::make_pair(x,y);
             while (k < 19)
             {
                 if (_map[k + 1][y] == TA::Board::State::Unknown && isdead(k + 1, y))
@@ -469,9 +478,12 @@ public:
 
                     }
                 }
+                /*if (up_bound.first == 0 && up_bound.second == 6)
+                exit(0);*/
                 if (lenl + lenr != 2 && lenl + lenr != 4 && lenl + lenr != 6)
                 {
-                    if (!(x == left_bound.first && y == left_bound.second )){
+                    if (!(x == left_bound.first && y == left_bound.second && last != right)){
+                        last = left;
                         std::pair<int, int> res = getlen(left_bound.first, left_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
@@ -482,25 +494,13 @@ public:
                     //exit(0);
                     
                 }
-                if (lenl + lenr != 2 && lenl + lenr != 4 && lenl + lenr != 6)
-                {
-                    //exit(0);
-                    if (!(x == right_bound.first && y == right_bound.second )){
-                        std::pair<int, int> res = getlen(right_bound.first, right_bound.second, _map);
-                        if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
-                            return res;
-                        res = getlen(mycenter.first, mycenter.second, _map);
-                        if (res.first != -1 && res.second != -1)
-                            return res;     
-                    }
-                   
-                }
                 if (lenu + lend != 2 && lenu + lend != 4 && lenu + lend != 6)
                 {
                     //exit(0);0,9
                     /*if (up_bound.first == 0 && up_bound.second == 9)
                         exit(0);*/
-                    if (!(x == up_bound.first && y == up_bound.second )){
+                    if (!(x == up_bound.first && y == up_bound.second && last != down)){
+                        last = up;
                         std::pair<int, int> res = getlen(up_bound.first, up_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
@@ -510,9 +510,26 @@ public:
                     }
                     
                 }
+                if (lenl + lenr != 2 && lenl + lenr != 4 && lenl + lenr != 6)
+                {
+                    //exit(0);
+                    if (!(x == right_bound.first && y == right_bound.second && last != left)){
+                        last = right;
+                        std::pair<int, int> res = getlen(right_bound.first, right_bound.second, _map);
+                        if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
+                            return res;
+                        res = getlen(mycenter.first, mycenter.second, _map);
+                        if (res.first != -1 && res.second != -1)
+                            return res;     
+                    }
+                   
+                }
+                //exit(0);
                 if (lenu + lend != 2 && lenu + lend != 4 && lenu + lend != 6)
                 {
-                    if (!(x == down_bound.first && y == down_bound.second )){
+                    
+                    if (!(x == down_bound.first && y == down_bound.second && last != up)){
+                        last = down;
                         std::pair<int, int> res = getlen(down_bound.first, down_bound.second, _map);
                         if (res.first != -1 && res.second != -1 && _map[res.first][res.second] == TA::Board::State::Unknown)
                             return res;
@@ -569,7 +586,7 @@ public:
            }
         }
         */
-        
+        last = none;
         if (!ishit)
         {
             for (int i = 0; i < 20; i++)
