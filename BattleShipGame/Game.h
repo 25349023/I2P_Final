@@ -229,6 +229,7 @@ namespace TA
 
             if( status != std::future_status::ready )
             {
+                putToGui((m_turn + "Lose: Timeout\n").c_str());
                 exit(-1);
             }
             val.get();
@@ -247,6 +248,7 @@ namespace TA
 
             if( status != std::future_status::ready )
             {
+                putToGui((m_turn + "Lose: Timeout\n").c_str());
                 exit(-1);
             }
             return val.get();
