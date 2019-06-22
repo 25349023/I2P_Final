@@ -30,6 +30,7 @@ namespace TA
             m_DefenseShip(nullptr),
             m_P1Board(size),
             m_P2Board(size),
+            m_OffenseBoard(nullptr),
             m_DefenseBoard(nullptr)
         {
             gui = new ASCII;
@@ -46,6 +47,7 @@ namespace TA
             m_offensive = m_P1;
             m_OffenseShip = &m_P1Ship;
             m_DefenseShip = &m_P2Ship;
+            m_OffenseBoard = &m_P1Board;
             m_DefenseBoard = &m_P2Board;
 
             while (true) {
@@ -61,37 +63,34 @@ namespace TA
                         /// hitPosition = m_offensive->queryWhereToHit(*m_DefenseBoard);
                         auto [hitX, hitY] = call(&AIInterface::queryWhereToHit, m_offensive, *m_DefenseBoard);
 
-                        if (within(hitX, hitY, 0, 0, m_size)){
-                            if ((*m_DefenseBoard)[hitX][hitY] == Board::State::Unknown){
-                                putToGui((m_turn + " Hit (%d, %d)\n").c_str(), hitX, hitY);
-                                for (auto &defShip : *m_DefenseShip){
-                                    if (within(hitX, hitY, defShip.x, defShip.y, defShip.size)){
-                                        if (hitX == defShip.x + defShip.size / 2 &&
-                                            hitY == defShip.y + defShip.size / 2){
-                                            defShip.state = Ship::State::Sink;
-                                            putToGui((m_turn + " Sank a Ship.\n").c_str());
-                                        }
-                                        else if (defShip.state != Ship::State::Sink){
-                                            defShip.state = Ship::State::Hit;
-                                            putToGui((m_turn + " Hit a Ship.\n").c_str());
-                                        }
-                                        hit = true;
-                                        (*m_DefenseBoard)[hitX][hitY] = Board::State::Hit;
-                                        break;
-                                    }
-                                }
-                                if (!hit){
-                                    (*m_DefenseBoard)[hitX][hitY] = Board::State::Empty;
-                                }
-                            }
-                            else {
-                                putToGui((m_turn + " Lose: Attack position already hit.\n").c_str());
-                                return;
-                            }
-                        }
-                        else {
+                        if (!within(hitX, hitY, 0, 0, m_size)){
                             putToGui((m_turn + " Lose: Position out of board.\n").c_str());
                             return;
+                        }
+                        if ((*m_DefenseBoard)[hitX][hitY] != Board::State::Unknown){
+                            putToGui((m_turn + " Lose: Attack position already hit.\n").c_str());
+                            return;
+                        }
+
+                        putToGui((m_turn + " Hit (%d, %d)\n").c_str(), hitX, hitY);
+                        for (auto &defShip : *m_DefenseShip){
+                            if (within(hitX, hitY, defShip.x, defShip.y, defShip.size)){
+                                if (hitX == defShip.x + defShip.size / 2 &&
+                                    hitY == defShip.y + defShip.size / 2){
+                                    defShip.state = Ship::State::Sink;
+                                    putToGui((m_turn + " Sank a Ship.\n").c_str());
+                                }
+                                else if (defShip.state != Ship::State::Sink){
+                                    defShip.state = Ship::State::Hit;
+                                    putToGui((m_turn + " Hit a Ship.\n").c_str());
+                                }
+                                hit = true;
+                                (*m_DefenseBoard)[hitX][hitY] = Board::State::Hit;
+                                break;
+                            }
+                        }
+                        if (!hit){
+                            (*m_DefenseBoard)[hitX][hitY] = Board::State::Empty;
                         }
                         m_last_attack.emplace_back(hitX, hitY);
 
@@ -129,7 +128,7 @@ namespace TA
                         }
                     }
                 }
-                if (!checkShipPosition(*m_OffenseShip)){
+                if (!checkShipPosition(*m_OffenseShip, *m_OffenseBoard)){
                     putToGui((m_turn + " Lose: Invalid move.\n").c_str());
                     return;
                 }
@@ -139,6 +138,7 @@ namespace TA
                     m_offensive = m_P2;
                     m_OffenseShip = &m_P2Ship;
                     m_DefenseShip = &m_P1Ship;
+                    m_OffenseBoard = &m_P2Board;
                     m_DefenseBoard = &m_P1Board;
                 }
                 else {
@@ -146,6 +146,7 @@ namespace TA
                     m_offensive = m_P1;
                     m_OffenseShip = &m_P1Ship;
                     m_DefenseShip = &m_P2Ship;
+                    m_OffenseBoard = &m_P1Board;
                     m_DefenseBoard = &m_P2Board;
                 }
 
@@ -190,7 +191,7 @@ namespace TA
 
             putToGui("P1 Prepareing...\n");
             initPos = call(&AIInterface::init, m_P1, m_size, m_ship_size, true, m_runtime_limit);
-            if( !checkShipPosition(initPos) )
+            if( !checkShipPosition(initPos, m_P1Board) )
             {
                 putToGui("P1 Init() Invaild...\n");
                 return false;
@@ -204,7 +205,7 @@ namespace TA
 
             putToGui("P2 Prepareing...\n");
             initPos = call(&AIInterface::init, m_P2, m_size, m_ship_size, false, m_runtime_limit);
-            if( !checkShipPosition(initPos) )
+            if( !checkShipPosition(initPos, m_P2Board) )
             {
                 putToGui("P2 Init() Invaild...\n");
                 return false;
@@ -228,6 +229,7 @@ namespace TA
 
             if( status != std::future_status::ready )
             {
+                putToGui((m_turn + "Lose: Timeout\n").c_str());
                 exit(-1);
             }
             val.get();
@@ -246,6 +248,7 @@ namespace TA
 
             if( status != std::future_status::ready )
             {
+                putToGui((m_turn + "Lose: Timeout\n").c_str());
                 exit(-1);
             }
             return val.get();
@@ -271,50 +274,49 @@ namespace TA
             return ptr->abi() == AI_ABI_VER;
         }
 
-        bool checkShipPosition(std::vector<Ship> ships)
-        {
-            
-            if( ships.size() != m_ship_size.size() )
-            {
-                putToGui("Ship number not match : real %zu ,expect %zu,\n",ships.size(), m_ship_size.size());
+        bool checkShipPosition(std::vector<Ship> ships, Board board) {
+
+            if (ships.size() != m_ship_size.size()){
+                putToGui("Ship number not match : real %zu ,expect %zu,\n", ships.size(), m_ship_size.size());
                 return false;
             }
-            
-            std::sort(ships.begin(), ships.end(), [](Ship a, Ship b){
-                return a.size < b.size; 
+
+            std::sort(ships.begin(), ships.end(), [](Ship a, Ship b) {
+                return a.size < b.size;
             });
 
             std::vector<std::vector<int>> map(m_size, std::vector<int>(m_size));
 
             int id = -1;
-            for( auto [size, x, y, state] : ships )
-            {
+            for (auto[size, x, y, state] : ships){
                 id++;
-                if( size != m_ship_size[id] )
-                {
+                if (size != m_ship_size[id]){
                     putToGui("Ship %d size not match : real %zu ,expect %zu,\n", id, size, m_ship_size[id]);
                     return false;
                 }
 
-                for( int dx = 0 ; dx < size ; dx++ )
-                    for( int dy = 0 ; dy < size ; dy++ )
-                        {
-                            int nx = x + dx;
-                            int ny = y + dy;
+                for (int dx = 0; dx < size; dx++){
+                    for (int dy = 0; dy < size; dy++){
+                        int nx = x + dx;
+                        int ny = y + dy;
 
-                            if( nx < 0 || nx >= m_size || ny < 0 || ny >= m_size )
-                            {
-                                putToGui("Ship %d out of range at (%d,%d),\n", id, nx, ny);
-                                return false;
-                            }
-
-                            if( map[nx][ny] != 0 )
-                            {
-                                putToGui("Ship %d and %d overlapping at (%d,%d),\n", id,  map[nx][ny]-1, nx, ny);
-                                return false;
-                            }
-                            map[nx][ny] = id + 1;
+                        if (nx < 0 || nx >= m_size || ny < 0 || ny >= m_size){
+                            putToGui("Ship %d out of range at (%d,%d),\n", id, nx, ny);
+                            return false;
                         }
+
+                        if (map[nx][ny] != 0){
+                            putToGui("Ship %d and %d overlapping at (%d,%d),\n", id, map[nx][ny] - 1, nx, ny);
+                            return false;
+                        }
+                        map[nx][ny] = id + 1;
+
+                        if (state == Ship::State::Available && board[nx][ny] != Board::State::Unknown){
+                            putToGui("Ship %d move onto already hit point (%d,%d).\n", id, nx, ny);
+                            return false;
+                        }
+                    }
+                }
             }
             return true;
         }
@@ -337,6 +339,7 @@ namespace TA
         std::vector<Ship> *m_DefenseShip;
         Board m_P1Board;
         Board m_P2Board;
+        Board *m_OffenseBoard;
         Board *m_DefenseBoard;
     } ;
 }

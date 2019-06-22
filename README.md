@@ -3,8 +3,8 @@
 ## The final project for I2P(II)
 
 - Author
-  - 107062303
-  - 107062304 OK
+  - 107062304 AI v2
+  - 107062303 game v2
   - 107062306  ok
 
 - Develop Branch
