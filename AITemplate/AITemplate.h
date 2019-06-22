@@ -32,10 +32,10 @@ public:
         (void) runtime;
         ishit = false;
         std::vector<TA::Ship> tmp;
-        tmp.push_back({3, 0, 13, TA::Ship::State::Available});
-        tmp.push_back({3, 0, 16, TA::Ship::State::Available});
-        tmp.push_back({5, 3, 8, TA::Ship::State::Available});
-        tmp.push_back({7, 3, 13, TA::Ship::State::Available});
+        tmp.push_back({3, 15, 17    , TA::Ship::State::Available});
+        tmp.push_back({3, 17, 4   , TA::Ship::State::Available});
+        tmp.push_back({5, 10, 15    , TA::Ship::State::Available});
+        tmp.push_back({7, 13, 7   , TA::Ship::State::Available});
         bool fff = order;
         int ddd = ship_size.size();
         int kkk = size;
@@ -124,7 +124,6 @@ public:
                 if (ishit == true)
                     break;
             }
-
         }
 
         if (ishit){
@@ -164,7 +163,6 @@ public:
                 if (k + 1 == 19 && _map[x][k + 1] == TA::Board::State::Hit)
                     right_bound = std::make_pair(x, k + 1);
                 k++;
-
             }
 
             k = x;
@@ -184,7 +182,6 @@ public:
                 if (k - 1 == 0 && _map[k - 1][y] == TA::Board::State::Hit)
                     up_bound = std::make_pair(k - 1, y);
                 k--;
-
             }
 
             k = x;
@@ -204,7 +201,6 @@ public:
                 if (k + 1 == 19 && _map[k + 1][y] == TA::Board::State::Hit)
                     down_bound = std::make_pair(k + 1, y);
                 k++;
-
             }
 
             if ((lenl + lenr == 2 && lenu + lend == 2) || (lenl + lenr == 4 && lenu + lend == 4) ||
