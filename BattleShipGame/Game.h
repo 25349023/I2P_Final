@@ -105,24 +105,24 @@ namespace TA
                 }
 
                 /// m_offensive->queryHowToMoveShip(*m_OffenseShip);
-                auto movePath = call(&AIInterface::queryHowToMoveShip, m_offensive, *m_OffenseShip);
-                if (!movePath.empty() && movePath.size() != m_ship_size.size()){
+                auto newPath = call(&AIInterface::queryHowToMoveShip, m_offensive, *m_OffenseShip);
+                if (newPath.size() != m_ship_size.size()){
                     putToGui((m_turn + " Lose: # of moving doesn't match.\n").c_str());
                     return;
                 }
-                for (int i = 0; i < static_cast<int>(movePath.size()); i++){
-                    auto [dx, dy] = movePath[i];
-                    if (std::abs(dx) + std::abs(dy) > 1){
+                for (int i = 0; i < static_cast<int>(newPath.size()); i++){
+                    auto [nx, ny] = newPath[i];
+                    auto &ship = (*m_OffenseShip)[i];
+                    if (std::abs(nx - ship.x) + std::abs(ny - ship.y) > 1){
                         putToGui((m_turn + " Lose: Invalid move: too much.\n").c_str());
                         return;
                     }
-                    auto &ship = (*m_OffenseShip)[i];
                     if (ship.state == Ship::State::Available){
-                        ship.x += dx;
-                        ship.y += dy;
+                        ship.x = nx;
+                        ship.y = ny;
                     }
                     else {
-                        if (dx != 0 || dy != 0){
+                        if (nx != ship.x || ny != ship.y){
                             putToGui((m_turn + " Lose: Invalid move: moving hit ship.\n").c_str());
                             return;
                         }

@@ -32,10 +32,10 @@ public:
         (void) runtime;
         ishit = false;
         std::vector<TA::Ship> tmp;
-        tmp.push_back({3, 15, 17    , TA::Ship::State::Available});
-        tmp.push_back({3, 17, 4   , TA::Ship::State::Available});
-        tmp.push_back({5, 10, 15    , TA::Ship::State::Available});
-        tmp.push_back({7, 13, 7   , TA::Ship::State::Available});
+        tmp.push_back({3, 15, 17, TA::Ship::State::Available});
+        tmp.push_back({3, 17, 4, TA::Ship::State::Available});
+        tmp.push_back({5, 10, 15, TA::Ship::State::Available});
+        tmp.push_back({7, 13, 7, TA::Ship::State::Available});
         bool fff = order;
         int ddd = ship_size.size();
         int kkk = size;
@@ -451,7 +451,12 @@ public:
 
     }
 
-    std::vector<std::pair<int, int>> queryHowToMoveShip(std::vector<TA::Ship>) override {
-        return {};
+    std::vector<std::pair<int, int>> queryHowToMoveShip(std::vector<TA::Ship> ships) override {
+        std::vector<std::pair<int, int>> res;
+        for (auto &ship : ships){
+            res.emplace_back(ship.x, ship.y);
+        }
+
+        return res;
     }
 };
